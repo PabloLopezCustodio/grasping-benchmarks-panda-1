@@ -176,7 +176,7 @@ RUN mkdir -p ${CATKIN_WS_DIR}/src && \
 # # ==========================
 
 RUN cd ${CATKIN_WS_DIR}/src &&\
-    git clone https://github.com/nicolas-schreiber/grasping-benchmarks-panda.git &&\
+    git clone https://github.com/PabloLopezCustodio/grasping-benchmarks-panda-1.git &&\
     pip3 install grasping-benchmarks-panda/ &&\
     cd ${CATKIN_WS_DIR} &&\
     rosdep update &&\
