@@ -170,7 +170,7 @@ ENV GRASPNET_DIR=${WS_SOURCES}/6dof-graspnet
 
 RUN cd ${CATKIN_WS_DIR}/src &&\
     git clone https://github.com/PabloLopezCustodio/grasping-benchmarks-panda-1.git &&\
-    pip install -e grasping-benchmarks-panda/ &&\
+    pip install -e grasping-benchmarks-panda-1/ &&\
     cd ${CATKIN_WS_DIR} &&\
     rosdep update &&\
     catkin config --extend /opt/ros/${ROS_DISTRO} -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_BUILD_TYPE=Release -DGPD_ROS=OFF &&\
