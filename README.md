@@ -25,7 +25,7 @@ eval $(ssh-agent)
 ```
 cd docker/build_images
 make USER_NAME=<user_name> dexnet
-make USER_NAME=<user_name> 6graspnet
+make USER_NAME=<user_name> 6dgraspnet
 make USER_NAME=<user_name> gdp
 ```
 or build them all at once:
