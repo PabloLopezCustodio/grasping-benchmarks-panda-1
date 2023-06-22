@@ -78,7 +78,7 @@ RUN python3 -m pip install --upgrade pip
 # ========================
 
 # https://github.com/osrf/docker_images/blob/master/ros/
-ENV ROS_DISTRO=melodic
+ENV ROS_DISTRO=noetic
 
 RUN apt-key adv --keyserver keyserver.ubuntu.com \
                 --recv-keys F42ED6FBAB17C654 &&\
@@ -86,14 +86,14 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com \
         > /etc/apt/sources.list.d/ros-latest.list &&\
     apt-get update &&\
     apt-get install -y --no-install-recommends \
-        ros-${ROS_DISTRO}-desktop-full \
-	    ros-${ROS_DISTRO}-jsk-tools \
-        python-rosdep \
-        python-rosinstall \
-        python-rosinstall-generator \
-        python-vcstools \
-        python-wstool \
-        python-catkin-tools \
+        ros-noetic-desktop-full \
+	ros-${ROS_DISTRO}-jsk-tools \
+        python3-rosdep \
+        python3-rosinstall \
+        python3-rosinstall-generator \
+        python3-vcstools \
+        python3-wstool \
+        python3-catkin-tools \
         python3-catkin-pkg-modules \
         python3-rospkg-modules \
         python3-empy \
@@ -134,7 +134,6 @@ RUN apt-get update && \
     numpy \
     scipy \
     matplotlib \
-    tensorflow-gpu==1.15.0 \
     scikit-build \
     scikit-learn \
     scikit-image \
@@ -166,10 +165,6 @@ RUN cd ${WS_SOURCES} &&\
 # ===========================================================
 RUN mkdir -p ${CATKIN_WS_DIR}/src && \
     cd ${CATKIN_WS_DIR} &&\
-    wstool init &&\
-    wstool set -y src/geometry2 --git https://github.com/ros/geometry2 -v 0.6.5 &&\
-    wstool set -y src/vision_opencv --git https://github.com/ros-perception/vision_opencv -v 1.13.0 &&\
-    wstool up &&\
     rosdep update && rosdep install --from-paths src --ignore-src -y -r &&\
     rm -rf /var/lib/apt/lists/* &&\
     catkin config --extend /opt/ros/${ROS_DISTRO} -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_BUILD_TYPE=Release && \
@@ -177,29 +172,24 @@ RUN mkdir -p ${CATKIN_WS_DIR}/src && \
     echo 'source ${CATKIN_WS_DIR}/devel/setup.bash' >> /etc/bash.bashrc &&\
     find ${CATKIN_WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
 
-# Install benchmark-grasping
-# ==========================
-
-#RUN mkdir -p -m 0600 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
+# # Install benchmark-grasping
+# # ==========================
 
 RUN cd ${CATKIN_WS_DIR}/src &&\
     git clone https://github.com/nicolas-schreiber/grasping-benchmarks-panda.git &&\
-    pip3 install -e grasping-benchmarks-panda/ &&\
+    pip3 install grasping-benchmarks-panda/ &&\
     cd ${CATKIN_WS_DIR} &&\
-    catkin config --extend /opt/ros/${ROS_DISTRO} -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_BUILD_TYPE=Release -DGPD_ROS=OFF && \
+    rosdep update &&\
+    catkin config --extend /opt/ros/${ROS_DISTRO} -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_BUILD_TYPE=Release -DGPD_ROS=OFF &&\
     catkin build  -j8 && \
     find ${CATKIN_WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
-
-# =============
-# FIX OWNERSHIP
-# =============
-RUN find ${WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+ &&\
-    find ${CATKIN_WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
+    
 
 # Nvidia runtime support
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=all
 
+##############################################
 # Image initialization
 # ====================
 ENV USERNAME=docker
@@ -210,9 +200,17 @@ ENV GRASP_BENCHMARK_DEXNET=true
 # Include a custom bashrc
 COPY bashrc /usr/etc/skel/bashrc-dev
 COPY GQCNN-4.0-PJ /workspace/sources/gqcnn/models/GQCNN-4.0-PJ
+# =============
+# FIX OWNERSHIP
+# =============
+RUN find ${WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+ &&\
+    find ${CATKIN_WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
+RUN find ${CATKIN_WS_DIR} -type f -exec chmod g+rw '{}' \;
+RUN find ${CATKIN_WS_DIR} -type d -exec chmod g+rwx '{}' \;
+RUN find ${CATKIN_WS_DIR} -exec chown :runtimeusers '{}' \;
 COPY setup.sh /usr/sbin/setup.sh
 COPY entrypoint.sh /usr/sbin/entrypoint.sh
 RUN chmod 755 /usr/sbin/setup.sh
 RUN chmod 755 /usr/sbin/entrypoint.sh
 ENTRYPOINT ["/usr/sbin/entrypoint.sh"]
-CMD ["roslaunch grasping_benchmarks_ros grasp_planning_benchmark.launch"]
+CMD ["bash"]
