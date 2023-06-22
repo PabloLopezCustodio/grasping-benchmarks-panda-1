@@ -145,7 +145,7 @@ RUN mkdir -p ${WS_SOURCES} &&\
      cd ${WS_SOURCES}
 
 RUN cd ${WS_SOURCES} &&\
-    git clone https://github.com/nicolas-schreiber/6dof-graspnet.git &&\
+    git clone https://github.com/PabloLopezCustodio/6dof-graspnet.git &&\
     git clone https://github.com/hsp-panda/pointnet2.git &&\
     cd 6dof-graspnet/ &&\
     #pip3 install vtk==9.1.0 &&\
