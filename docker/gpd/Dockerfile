@@ -261,7 +261,7 @@ RUN apt-get update &&\
 
 RUN cd ${CATKIN_WS_DIR}/src &&\
     git clone https://github.com/PabloLopezCustodio/grasping-benchmarks-panda-1.git &&\
-    pip3 install grasping-benchmarks-panda/ &&\
+    pip3 install grasping-benchmarks-panda-1/ &&\
     cd ${CATKIN_WS_DIR} && \
     catkin config --extend /opt/ros/${ROS_DISTRO} -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_BUILD_TYPE=Release -DGPD_ROS=ON -DPCL_DIR=${WS_INSTALL}/share/pcl-1.9 &&\
     catkin build  -j8 &&\
