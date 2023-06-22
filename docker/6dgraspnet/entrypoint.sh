@@ -20,9 +20,9 @@ echo "==> Custom TensorFlow operators ready"
 
 echo "==> 6DoFGraspNet benchmarking container ready"
 
-#pip install -e ${CATKIN_WS_DIR}/src/grasping-benchmarks-panda/
+#pip install -e ${CATKIN_WS_DIR}/src/grasping-benchmarks-panda-1/
 
-gosu $USERNAME bash -c 'pip install -e ${CATKIN_WS_DIR}/src/grasping-benchmarks-panda/'
+gosu $USERNAME bash -c 'pip install -e ${CATKIN_WS_DIR}/src/grasping-benchmarks-panda-1/'
 
 # If a CMD is passed, execute it
 echo "== execute command $@"
