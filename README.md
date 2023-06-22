@@ -15,7 +15,7 @@ This fork allows the use of the latest version of Dexnet. It also allows Graspne
 1. Git-clone this fork:
 ```
 git clone https://github.com/PabloLopezCustodio/grasping-benchmarks-panda-1.git
-cd grasp
+cd grasping-benchmarks-panda-1
 ```
 2. fix ssh-agent (optional):
 ```
