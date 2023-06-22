@@ -14,7 +14,7 @@ from grasping_benchmarks.base.base_grasp_planner import BaseGraspPlanner, Camera
 from grasping_benchmarks.base.grasp import Grasp6D
 from grasping_benchmarks.base import transformations as tr
 
-import mayavi.mlab as mlab
+# import mayavi.mlab as mlab
 import tensorflow as tf
 
 # Import the GraspNet implementation code
@@ -24,7 +24,7 @@ os.chdir(os.environ['GRASPNET_DIR'])
 from demo.main import get_color_for_pc, backproject, make_parser
 import grasp_estimator
 # import utils as utils
-import visualization_utils 
+# import visualization_utils 
 
 
 class ArucoBoardData:
