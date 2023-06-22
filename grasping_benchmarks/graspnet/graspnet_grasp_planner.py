@@ -14,7 +14,7 @@ from grasping_benchmarks.base.base_grasp_planner import BaseGraspPlanner, Camera
 from grasping_benchmarks.base.grasp import Grasp6D
 from grasping_benchmarks.base import transformations as tr
 
-# import mayavi.mlab as mlab
+#import mayavi.mlab as mlab
 import tensorflow as tf
 
 # Import the GraspNet implementation code
@@ -23,7 +23,7 @@ sys.path.append(os.environ['GRASPNET_DIR'])
 os.chdir(os.environ['GRASPNET_DIR'])
 from demo.main import get_color_for_pc, backproject, make_parser
 import grasp_estimator
-# import utils as utils
+import utils as utils
 # import visualization_utils 
 
 
@@ -78,7 +78,7 @@ def transform_grasp_and_offset_to_world(grasping_pose:Grasp6D, offset:np.ndarray
 
     return w_T_grasp   
 
-def check_collision_between_gripper_and_table(grasping_pose:Grasp6D,camera_pose:CameraData, aruco_board_data: ArucoBoardData):
+def check_collision_between_gripper_and_table(grasping_pose:Grasp6D,camera_pose:CameraData):
     """Check the collision between the table, which position is identified by ArucoBoard, and the vertices of a cuboid
     which approximate the gripper
 
@@ -95,28 +95,31 @@ def check_collision_between_gripper_and_table(grasping_pose:Grasp6D,camera_pose:
     PoseStamped
        True if there are collisions, False if there aren't collisions
     """
-    
+    print('CHECKING COLLISIONS!')
     offset_distance = 0.01
     check_points = np.matrix([[0.03, 0.11, -0.13],
                              [0.03, -0.11, -0.13],
                              [-0.03, 0.11, -0.13],
                              [-0.03, -0.11, -0.13],    
-                             [0.03, 0.11, 0.01],
-                             [0.03, -0.11, 0.01],  
-                             [-0.03, 0.11, 0.01],
-                             [-0.03, -0.11, 0.01]])     
+                             [0.015, 0.06, 0.01],
+                             [0.015, -0.06, 0.01],  
+                             [-0.015, 0.06, 0.01],
+                             [-0.015, -0.06, 0.01]])     
 
     collisions = np.full((1,len(check_points)),True)                         
     
+    # print('grasp position in Co: ', grasping_pose.position)
+    # print('grasp orientation in Co: ', grasping_pose.rotation)
+
     for i in range(len(check_points)):
        ###  transform_grasp_and_offset_to_world provides the positions of the vertices of the cuboid in the world reference  
        check_point_in_wrf = transform_grasp_and_offset_to_world(grasping_pose, check_points[i,:],camera_pose)
 
        if i<=3:
-            if check_point_in_wrf[2,3] > aruco_board_data.position.z + offset_distance:
+            if check_point_in_wrf[2,3] > -0.005 + offset_distance:
                collisions[0,i] = False
        elif i>3:      
-            if check_point_in_wrf[2,3] > aruco_board_data.position.z:
+            if check_point_in_wrf[2,3] > -0.005:
                collisions[0,i] = False
     
     true_collisions = np.where(collisions==True)
@@ -124,15 +127,16 @@ def check_collision_between_gripper_and_table(grasping_pose:Grasp6D,camera_pose:
     is_gripper_in_aruco_work_space = False
     gripper_pose_in_wrf = transform_grasp_and_offset_to_world(grasping_pose, [0,0,0],camera_pose)
     
-    if (gripper_pose_in_wrf[0,3]-aruco_board_data.position.x < 0.50):
-        if (gripper_pose_in_wrf[1,3]-aruco_board_data.position.y < 0.70):
-            if (gripper_pose_in_wrf[2,3]-aruco_board_data.position.z < 1.00):
-                is_gripper_in_aruco_work_space == True
+    print('grasp pose in W: ', gripper_pose_in_wrf)
 
-    else:
-        is_gripper_in_aruco_work_space == False
+    if (gripper_pose_in_wrf[0,3] > 0.20 and  gripper_pose_in_wrf[0,3] < 0.80):
+        if (gripper_pose_in_wrf[1,3] > -0.60 and gripper_pose_in_wrf[1,3] < 0.60):
+            if (gripper_pose_in_wrf[2,3] < 0.80):
+                is_gripper_in_aruco_work_space = True
+
+    print('is gripper in workspace:', is_gripper_in_aruco_work_space)
     
-    if (true_collisions[0].size == 0):
+    if (true_collisions[0].size == 0 and is_gripper_in_aruco_work_space == True):
         return False
     else:
         return True    
@@ -192,7 +196,7 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
         self.cfg_grasp_estimator['threshold'] = self.cfg_ns.threshold
         self.cfg_grasp_estimator['sample_based_improvement'] = 1 - int(self.cfg_ns.gradient_based_refinement)
         self.cfg_grasp_estimator['num_refine_steps'] = 10 if self.cfg_ns.gradient_based_refinement else 20
-        self.cfg_grasp_estimator['num_samples'] = 200
+        self.cfg_grasp_estimator['num_samples'] = 400
 
 
 
@@ -366,6 +370,9 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
         filtered_latest_grasps = []
         filtered_latest_grasp_scores = []
 
+        # print('max in [xyz]:', self.object_pc.max(axis=0))
+        # print('min in [xyz]:', self.object_pc.min(axis=0))
+
         for grasp,score in zip(self.latest_grasps, self.latest_grasp_scores):
             # Grasps should already be in 6D as output
             # A 90 degrees offset is applied to account for the difference in
@@ -383,8 +390,9 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
                                width=0, score=score,
                                ref_frame=camera_data.intrinsic_params['frame'])
 
-            if (aruco_board_data.enable_grasp_filter==True):
-                if check_collision_between_gripper_and_table(grasp_6d, camera_data, aruco_board_data) == False:
+            if True:
+                if check_collision_between_gripper_and_table(grasp_6d, camera_data) == False:
+                    print('approve')
                     self.grasp_poses.append(grasp_6d)
                     filtered_latest_grasps.append(grasp)
                     filtered_latest_grasp_scores.append(score)
@@ -395,25 +403,28 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
             self.latest_grasps = filtered_latest_grasps
             self.latest_grasp_scores = filtered_latest_grasp_scores
         
+        print('n_candidates = %d' % n_candidates)
+        print('size of grasp_poses:')
+        print(np.shape(self.grasp_poses))
         self.grasp_poses = self.grasp_poses[0:n_candidates]
         self.best_grasp = self.grasp_poses[0]
 
         return True
 
-    def visualize(self, visualize_all : bool = True):
-        """Visualize point cloud and last batch of computed grasps in a 3D visualizer
-        """
-
-        candidates_to_display = self.n_of_candidates if ((self.n_of_candidates > 0) and (self.n_of_candidates < len(self.latest_grasps)) and not visualize_all) else len(self.latest_grasps)
-
-        mlab.figure(bgcolor=(1,1,1))
-        visualization_utils.draw_scene(
-            pc=self.scene_pc,
-            grasps=self.latest_grasps[:candidates_to_display],
-            grasp_scores=self.latest_grasp_scores[:candidates_to_display],
-            pc_color=self.scene_pc_colors,
-            show_gripper_mesh=True
-        )
-        print('[INFO] Close visualization window to proceed')
-        mlab.show()
+    # def visualize(self, visualize_all : bool = True):
+    #    """Visualize point cloud and last batch of computed grasps in a 3D visualizer
+    #    """
+    #
+    #     candidates_to_display = self.n_of_candidates if ((self.n_of_candidates > 0) and (self.n_of_candidates < len(self.latest_grasps)) and not visualize_all) else len(self.latest_grasps)
+    #
+    #    mlab.figure(bgcolor=(1,1,1))
+    #    visualization_utils.draw_scene(
+    #        pc=self.scene_pc,
+    #        grasps=self.latest_grasps[:candidates_to_display],
+    #        grasp_scores=self.latest_grasp_scores[:candidates_to_display],
+    #        pc_color=self.scene_pc_colors,
+    #        show_gripper_mesh=True
+    #    )
+    #    print('[INFO] Close visualization window to proceed')
+    #    mlab.show()
 
