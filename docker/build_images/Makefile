@@ -8,7 +8,7 @@ endif
 
 dexnet:
 	DOCKER_BUILDKIT=1 docker build --ssh default --rm \
-		--build-arg from=nvcr.io/nvidia/tensorflow:22.07-tf1-py3 \
+		--build-arg from=nvcr.io/nvidia/tensorflow:22.09-tf1-py3 \
 		--tag $(USER_NAME)/benchmark_dexnet:latest \
 	    ../dexnet/
 
@@ -26,7 +26,7 @@ superquadrics:
 
 6dgraspnet:
 	docker build --rm \
-		--build-arg from=nvcr.io/nvidia/tensorflow:22.07-tf1-py3 \
+		--build-arg from=nvcr.io/nvidia/tensorflow:22.09-tf1-py3 \
 		--tag $(USER_NAME)/benchmark_6dgraspnet:latest \
 		../6dgraspnet/
 
