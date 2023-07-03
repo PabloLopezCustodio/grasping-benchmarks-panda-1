@@ -14,13 +14,13 @@ dexnet:
 
 gpd:
 	DOCKER_BUILDKIT=1 docker build --ssh default --rm \
-	    --build-arg from=nvidia/cuda:11.7.0-runtime-ubuntu18.04 \
+	    --build-arg from=nvidia/cuda:11.8.0-runtime-ubuntu18.04 \
 	    --tag $(USER_NAME)/benchmark_gpd:latest \
 	    ../gpd/
 
 superquadrics:
 	DOCKER_BUILDKIT=1 docker build --ssh default --rm \
-		--build-arg from=nvidia/cuda:11.7.0-runtime-ubuntu18.04 \
+		--build-arg from=nvidia/cuda:11.8.0-runtime-ubuntu18.04 \
 	    --tag $(USER_NAME)/benchmark_superquadrics:latest \
 	    ../superquadrics_based/
 
